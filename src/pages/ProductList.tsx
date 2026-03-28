@@ -41,17 +41,10 @@ const tokens = {
 const PageShell = styled.div`
   min-height: 100vh;
   background: ${tokens.bg};
-  padding: 32px 40px;
   font-family: 'DM Sans', 'Segoe UI', sans-serif;
-
-  @media (max-width: 768px) {
-    padding: 20px 16px;
-  }
 `;
 
 const PageHeader = styled.div`
-  max-width: 1400px;
-  margin: 0 auto 28px;
   display: flex;
   align-items: center;
   gap: 14px;
@@ -87,20 +80,15 @@ const PageSubtitle = styled.p`
 
 // ─── Alert ────────────────────────────────────────────────────────────────────
 const AlertWrap = styled.div`
-  max-width: 1400px;
-  margin: 0 auto 20px;
   animation: ${fadeUp} 0.4s ease 0.05s both;
 `;
 
 // ─── Filter Card ─────────────────────────────────────────────────────────────
 const FilterCard = styled.div`
-  max-width: 1400px;
-  margin: 0 auto 20px;
   background: ${tokens.surface};
   border: 1px solid ${tokens.border};
   border-radius: ${tokens.radius};
   box-shadow: ${tokens.shadow};
-  padding: 20px 24px;
   animation: ${fadeUp} 0.4s ease 0.08s both;
 `;
 
@@ -115,10 +103,6 @@ const FilterDivider = styled.div`
   width: 1px;
   height: 32px;
   background: ${tokens.border};
-
-  @media (max-width: 640px) {
-    display: none;
-  }
 `;
 
 const FilterLabelText = styled.span`
@@ -132,8 +116,6 @@ const FilterLabelText = styled.span`
 
 // ─── Table Card ───────────────────────────────────────────────────────────────
 const TableCard = styled.div`
-  max-width: 1400px;
-  margin: 0 auto;
   background: ${tokens.surface};
   border: 1px solid ${tokens.border};
   border-radius: ${tokens.radius};
@@ -294,15 +276,10 @@ const StyledSearchInput = styled(Input)`
     border-color: ${tokens.border};
     height: 38px;
     font-size: 14px;
-    width: 300px;
 
     &:hover, &:focus {
       border-color: ${tokens.accent};
       box-shadow: 0 0 0 2px ${tokens.accentLight};
-    }
-
-    @media (max-width: 640px) {
-      width: 100%;
     }
   }
 `;
@@ -505,103 +482,112 @@ export default function ProductList() {
   const hasError = productsError || categoriesError;
 
   return (
-    <PageShell>
+    <PageShell className="px-10 py-8 md:px-5 md:py-5">
       {/* Header */}
-      <PageHeader>
-        <IconBadge>
-          <AppstoreOutlined />
-        </IconBadge>
-        <div>
-          <PageTitle>Products</PageTitle>
-          <PageSubtitle>
-            {productsData?.total
-              ? `${productsData.total} items in catalogue`
-              : 'Browse your product catalogue'}
-          </PageSubtitle>
-        </div>
-      </PageHeader>
+      <div className="max-w-6xl mx-auto mb-7">
+        <PageHeader>
+          <IconBadge>
+            <AppstoreOutlined />
+          </IconBadge>
+          <div>
+            <PageTitle>Products</PageTitle>
+            <PageSubtitle>
+              {productsData?.total
+                ? `${productsData.total} items in catalogue`
+                : 'Browse your product catalogue'}
+            </PageSubtitle>
+          </div>
+        </PageHeader>
+      </div>
 
       {/* Error */}
       {hasError && (
-        <AlertWrap>
-          <Alert
-            message="Failed to load data"
-            description="Could not fetch products or categories. Please try again."
-            type="error"
-            showIcon
-            closable
-            icon={<ReloadOutlined />}
-            style={{ borderRadius: tokens.radiusSm }}
-          />
-        </AlertWrap>
+        <div className="max-w-6xl mx-auto mb-5">
+          <AlertWrap>
+            <Alert
+              message="Failed to load data"
+              description="Could not fetch products or categories. Please try again."
+              type="error"
+              showIcon
+              closable
+              icon={<ReloadOutlined />}
+              style={{ borderRadius: tokens.radiusSm }}
+            />
+          </AlertWrap>
+        </div>
       )}
 
       {/* Filters */}
-      <FilterCard>
-        <FilterInner>
-          <StyledSearchInput
-            placeholder="Search products…"
-            prefix={<SearchOutlined style={{ color: tokens.textMuted }} />}
-            value={filterParams.searchQuery}
-            onChange={(e) => handleSearch(e.target.value)}
-            allowClear
-          />
+      <div className="max-w-6xl mx-auto mb-5">
+        <FilterCard className="px-6 py-5">
+          <FilterInner className="flex-wrap sm:flex-nowrap">
+            <StyledSearchInput
+              placeholder="Search products…"
+              prefix={<SearchOutlined style={{ color: tokens.textMuted }} />}
+              value={filterParams.searchQuery}
+              onChange={(e) => handleSearch(e.target.value)}
+              allowClear
+              className="w-full sm:w-80"
+            />
 
-          <FilterDivider />
+            <FilterDivider className="hidden sm:block" />
 
-          <FilterLabelText>Category</FilterLabelText>
+            <FilterLabelText>Category</FilterLabelText>
 
-          <StyledSelect
-            placeholder="All Categories"
-            allowClear
-            value={filterParams.selectedCategory}
-            onChange={handleCategoryChange as (value: unknown) => void}
-            loading={categoriesLoading}
-            style={{ width: 220 }}
-            options={
-              categoriesData?.map((cat) => ({
-                label: cat.name,
-                value: cat.slug,
-              })) || []
-            }
-          />
-        </FilterInner>
-      </FilterCard>
+            <StyledSelect
+              placeholder="All Categories"
+              allowClear
+              value={filterParams.selectedCategory}
+              onChange={handleCategoryChange as (value: unknown) => void}
+              loading={categoriesLoading}
+              style={{ width: 220 }}
+              options={
+                categoriesData?.map((cat) => ({
+                  label: cat.name,
+                  value: cat.slug,
+                })) || []
+              }
+            />
+          </FilterInner>
+        </FilterCard>
+      </div>
 
       {/* Table */}
-      <TableCard>
-        <Spin spinning={isLoading} tip="Loading products…">
-          {filteredProducts.length === 0 && !isLoading ? (
-            <EmptyWrap>
-              <Empty
-                description={
-                  filterParams.searchQuery || filterParams.selectedCategory
-                    ? 'No products match your filters'
-                    : 'No products available'
-                }
+      <div className="max-w-6xl mx-auto">
+        <TableCard>
+          <Spin spinning={isLoading} tip="Loading products…">
+            {filteredProducts.length === 0 && !isLoading ? (
+              <EmptyWrap>
+                <Empty
+                  description={
+                    filterParams.searchQuery || filterParams.selectedCategory
+                      ? 'No products match your filters'
+                      : 'No products available'
+                  }
+                />
+              </EmptyWrap>
+            ) : (
+              <Table<Product>
+                columns={columns}
+                dataSource={filteredProducts}
+                rowKey="id"
+                rowClassName={(_, index) => (index % 2 === 0 ? 'row-even' : 'row-odd')}
+                pagination={{
+                  current: filterParams.currentPage,
+                  pageSize: filterParams.pageSize,
+                  total: productsData?.total || 0,
+                  showSizeChanger: true,
+                  showQuickJumper: true,
+                  pageSizeOptions: ['5', '10', '20', '50'],
+                  showTotal: (total) => `${total} products`,
+                  className: 'px-4',
+                }}
+                onChange={handleTableChange}
               />
-            </EmptyWrap>
-          ) : (
-            <Table<Product>
-              columns={columns}
-              dataSource={filteredProducts}
-              rowKey="id"
-               rowClassName={(_, index) => (index % 2 === 0 ? 'row-even' : 'row-odd')}
-              pagination={{
-                current: filterParams.currentPage,
-                pageSize: filterParams.pageSize,
-                total: productsData?.total || 0,
-                showSizeChanger: true,
-                showQuickJumper: true,
-                pageSizeOptions: ['5', '10', '20', '50'],
-                showTotal: (total) => `${total} products`,
-                className: 'px-4',
-              }}
-              onChange={handleTableChange}
-            />
-          )}
-        </Spin>
-      </TableCard>
+            )}
+          </Spin>
+        </TableCard>
+      </div>
     </PageShell>
   );
 }
