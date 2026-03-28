@@ -3,7 +3,7 @@ import { Table, Select, Input, Button, Spin, Empty, Alert, Tag } from 'antd';
 import { SearchOutlined, AppstoreOutlined, ReloadOutlined } from '@ant-design/icons';
 import styled, { keyframes } from 'styled-components';
 import { useNavigate } from 'react-router-dom';
-import { useGetProductsQuery, useSearchProductsQuery, useGetCategoriesQuery } from '../store/api';
+import { useGetProductsQuery, useGetCategoriesQuery } from '../store/api';
 import type { TableProps } from 'antd';
 import type { Product } from '../store/api';
 
@@ -334,26 +334,11 @@ export default function ProductList() {
     currentPage: 1,
   });
 
-  const skip = (filterParams.currentPage - 1) * filterParams.pageSize;
-
   const {
     data: allProductsData,
     isLoading: allProductsLoading,
     error: allProductsError,
-  } = useGetProductsQuery({ limit: filterParams.pageSize, skip });
-
-  const {
-    data: searchProductsData,
-    isLoading: searchProductsLoading,
-    error: searchProductsError,
-  } = useSearchProductsQuery(
-    { q: filterParams.searchQuery, limit: filterParams.pageSize, skip },
-    { skip: !filterParams.searchQuery }
-  );
-
-  const productsData = filterParams.searchQuery ? searchProductsData : allProductsData;
-  const productsLoading = filterParams.searchQuery ? searchProductsLoading : allProductsLoading;
-  const productsError = filterParams.searchQuery ? searchProductsError : allProductsError;
+  } = useGetProductsQuery({ limit: 1000, skip: 0 });
 
   const {
     data: categoriesData,
@@ -362,12 +347,29 @@ export default function ProductList() {
   } = useGetCategoriesQuery();
 
   const filteredProducts = useMemo(() => {
-    if (!productsData?.products) return [];
-    if (!filterParams.selectedCategory) return productsData.products;
-    return productsData.products.filter(
-      (product) => product.category === filterParams.selectedCategory
-    );
-  }, [productsData, filterParams.selectedCategory]);
+    if (!allProductsData?.products) return [];
+
+    const normalizedQuery = filterParams.searchQuery.trim().toLowerCase();
+
+    return allProductsData.products.filter((product) => {
+      const matchesCategory =
+        !filterParams.selectedCategory || product.category === filterParams.selectedCategory;
+
+      const matchesSearch =
+        !normalizedQuery || product.title.toLowerCase().includes(normalizedQuery);
+
+      return matchesCategory && matchesSearch;
+    });
+  }, [allProductsData, filterParams.searchQuery, filterParams.selectedCategory]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / filterParams.pageSize));
+  const effectiveCurrentPage = Math.min(filterParams.currentPage, totalPages);
+
+  const paginatedProducts = useMemo(() => {
+    const start = (effectiveCurrentPage - 1) * filterParams.pageSize;
+    const end = start + filterParams.pageSize;
+    return filteredProducts.slice(start, end);
+  }, [filteredProducts, effectiveCurrentPage, filterParams.pageSize]);
 
   const handleTableChange: TableProps<Product>['onChange'] = (pagination) => {
     setFilterParams((prev) => ({
@@ -381,10 +383,10 @@ export default function ProductList() {
     setFilterParams((prev) => ({ ...prev, searchQuery: value, currentPage: 1 }));
   };
 
-  const handleCategoryChange = (value: string | null) => {
+  const handleCategoryChange = (value: string | undefined) => {
     setFilterParams((prev) => ({
       ...prev,
-      selectedCategory: value === '' ? null : value,
+      selectedCategory: value || null,
       currentPage: 1,
     }));
   };
@@ -478,8 +480,8 @@ export default function ProductList() {
     },
   ];
 
-  const isLoading = productsLoading || categoriesLoading;
-  const hasError = productsError || categoriesError;
+  const isLoading = allProductsLoading || categoriesLoading;
+  const hasError = allProductsError || categoriesError;
 
   return (
     <PageShell className="px-10 py-8 md:px-5 md:py-5">
@@ -492,8 +494,8 @@ export default function ProductList() {
           <div>
             <PageTitle>Products</PageTitle>
             <PageSubtitle>
-              {productsData?.total
-                ? `${productsData.total} items in catalogue`
+              {allProductsData?.total
+                ? `${filteredProducts.length} of ${allProductsData.total} items`
                 : 'Browse your product catalogue'}
             </PageSubtitle>
           </div>
@@ -522,7 +524,7 @@ export default function ProductList() {
         <FilterCard className="px-6 py-5">
           <FilterInner className="flex-wrap sm:flex-nowrap">
             <StyledSearchInput
-              placeholder="Search products…"
+              placeholder="Search products by title…"
               prefix={<SearchOutlined style={{ color: tokens.textMuted }} />}
               value={filterParams.searchQuery}
               onChange={(e) => handleSearch(e.target.value)}
@@ -538,7 +540,7 @@ export default function ProductList() {
               placeholder="All Categories"
               allowClear
               value={filterParams.selectedCategory}
-              onChange={handleCategoryChange as (value: unknown) => void}
+              onChange={handleCategoryChange}
               loading={categoriesLoading}
               style={{ width: 220 }}
               options={
@@ -569,13 +571,13 @@ export default function ProductList() {
             ) : (
               <Table<Product>
                 columns={columns}
-                dataSource={filteredProducts}
+                dataSource={paginatedProducts}
                 rowKey="id"
                 rowClassName={(_, index) => (index % 2 === 0 ? 'row-even' : 'row-odd')}
                 pagination={{
-                  current: filterParams.currentPage,
+                  current: effectiveCurrentPage,
                   pageSize: filterParams.pageSize,
-                  total: productsData?.total || 0,
+                  total: filteredProducts.length,
                   showSizeChanger: true,
                   showQuickJumper: true,
                   pageSizeOptions: ['5', '10', '20', '50'],
