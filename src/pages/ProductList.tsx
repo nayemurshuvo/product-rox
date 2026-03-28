@@ -362,20 +362,14 @@ export default function ProductList() {
     });
   }, [allProductsData, filterParams.searchQuery, filterParams.selectedCategory]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / filterParams.pageSize));
-  const effectiveCurrentPage = Math.min(filterParams.currentPage, totalPages);
-
-  const paginatedProducts = useMemo(() => {
-    const start = (effectiveCurrentPage - 1) * filterParams.pageSize;
-    const end = start + filterParams.pageSize;
-    return filteredProducts.slice(start, end);
-  }, [filteredProducts, effectiveCurrentPage, filterParams.pageSize]);
-
   const handleTableChange: TableProps<Product>['onChange'] = (pagination) => {
     setFilterParams((prev) => ({
       ...prev,
-      currentPage: pagination.current || 1,
-      pageSize: pagination.pageSize || 10,
+      currentPage:
+        pagination.pageSize && pagination.pageSize !== prev.pageSize
+          ? 1
+          : pagination.current || 1,
+      pageSize: pagination.pageSize || prev.pageSize,
     }));
   };
 
@@ -571,11 +565,11 @@ export default function ProductList() {
             ) : (
               <Table<Product>
                 columns={columns}
-                dataSource={paginatedProducts}
+                dataSource={filteredProducts}
                 rowKey="id"
                 rowClassName={(_, index) => (index % 2 === 0 ? 'row-even' : 'row-odd')}
                 pagination={{
-                  current: effectiveCurrentPage,
+                  current: filterParams.currentPage,
                   pageSize: filterParams.pageSize,
                   total: filteredProducts.length,
                   showSizeChanger: true,
