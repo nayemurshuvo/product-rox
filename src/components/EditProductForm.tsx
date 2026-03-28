@@ -2,15 +2,7 @@ import { Form, Input, InputNumber, Select, Button } from 'antd';
 import styled from 'styled-components';
 import type { Product, Category } from '../store/api';
 
-const FormButtonGroup = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-
-  button {
-    width: 100%;
-  }
-`;
+const FormButtonGroup = styled.div``;
 
 interface EditProductFormProps {
   product: Product;

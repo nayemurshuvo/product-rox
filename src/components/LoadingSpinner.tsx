@@ -5,13 +5,6 @@ const SpinnerContainer = styled.div<{ fullScreen?: boolean }>`
   display: flex;
   align-items: center;
   justify-content: center;
-  ${props => props.fullScreen ? `
-    position: fixed;
-    inset: 0;
-    background: white;
-  ` : `
-    padding: 48px 16px;
-  `}
 `;
 
 interface LoadingSpinnerProps {
@@ -24,7 +17,7 @@ export default function LoadingSpinner({
   fullScreen = false,
 }: LoadingSpinnerProps) {
   return (
-    <SpinnerContainer fullScreen={fullScreen} className={`${fullScreen ? 'fixed inset-0' : 'py-12'}`}>
+    <SpinnerContainer fullScreen={fullScreen} className={fullScreen ? 'fixed inset-0 bg-white' : 'py-12'}>
       <Spin size="large" tip={message} />
     </SpinnerContainer>
   );
